@@ -140,6 +140,145 @@ services:
           cpus: "0.5"
           memory: 512M
 
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    restart: unless-stopped
+    user: "65534:65534"
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=7d"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:9090/-/healthy > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    restart: unless-stopped
+    user: "472:472"
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    depends_on:
+      - prometheus
+      - loki
+      - alert-sink
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_SERVER_ROOT_URL: "https://localhost/grafana/"
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - frontend
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    restart: unless-stopped
+    security_opt:
+      - "no-new-privileges:true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /sys:/sys:ro
+    command:
+      - "--docker_only=true"
+      - "--raw_cgroup_prefix_whitelist=/docker"
+      - "--housekeeping_interval=10s"
+    networks:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:1.2.0
+    restart: unless-stopped
+    user: "65534:65534"
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - ALL
+    read_only: true
+    depends_on:
+      - nginx
+    environment:
+      SCRAPE_URI: "http://nginx:8080/nginx_status"
+    networks:
+      - frontend
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: 64M
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    restart: unless-stopped
+    user: "65534:65534"
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - ALL
+    read_only: true
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATA_SOURCE_NAME: "postgresql://exporter:${POSTGRES_EXPORTER_PASSWORD}@db:5432/blogcms?sslmode=disable"
+    networks:
+      - backend
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: 64M
+
 volumes:
   db_data:
     name: blogcms_db_data
@@ -147,6 +286,10 @@ volumes:
     name: blogcms_web_uploads
   pgadmin_data:
     name: blogcms_pgadmin_data
+  prometheus_data:
+    name: blogcms_prometheus_data
+  grafana_data:
+    name: blogcms_grafana_data
 
 networks:
   frontend:
@@ -156,3 +299,6 @@ networks:
     name: blogcms_backend
     driver: bridge
     internal: true
+  monitoring:
+    name: blogcms_monitoring
+    driver: bridge
