@@ -1,0 +1,171 @@
+﻿<%- include('../partials/head') %>
+<%- include('../partials/navbar') %>
+
+<main class="container my-5">
+  <div class="admin-header mb-4">
+    <div class="d-flex justify-between align-center mb-3">
+      <div>
+        <h1 class="page-title mb-1">Hàng đợi Phê duyệt bài viết</h1>
+        <p class="text-muted">Kiểm duyệt nội dung, yêu cầu sửa đổi hoặc xuất bản các bài viết của tác giả.</p>
+      </div>
+      <div>
+        <a href="/admin/dashboard" class="btn btn-outline">&larr; Quay lại Dashboard</a>
+      </div>
+    </div>
+
+    <!-- Admin Nav Submenu -->
+    <div class="admin-nav-bar d-flex gap-2 pb-2 border-bottom">
+      <a href="/admin/dashboard" class="btn btn-sm btn-outline">Dashboard</a>
+      <a href="/admin/queue" class="btn btn-sm btn-primary">Hàng đợi duyệt (<%= counts.pending %>)</a>
+      <a href="/admin/categories" class="btn btn-sm btn-outline">Chuyên mục</a>
+      <a href="/admin/tags" class="btn btn-sm btn-outline">Thẻ (Tags)</a>
+      <a href="/admin/comments" class="btn btn-sm btn-outline">Bình luận</a>
+      <a href="/admin/users" class="btn btn-sm btn-outline">Tài khoản</a>
+      <a href="/admin/media" class="btn btn-sm btn-outline">Media Library</a>
+    </div>
+  </div>
+
+  <% if (message) { %>
+    <div class="alert alert-success mb-4"><%= message %></div>
+  <% } %>
+  <% if (error) { %>
+    <div class="alert alert-danger mb-4"><%= error %></div>
+  <% } %>
+
+  <!-- Status Tabs -->
+  <div class="tabs mb-4">
+    <a href="/admin/queue?status=pending" class="tab-item <%= statusFilter === 'pending' ? 'active' : '' %>">
+      Chờ duyệt <span class="badge"><%= counts.pending %></span>
+    </a>
+    <a href="/admin/queue?status=published" class="tab-item <%= statusFilter === 'published' ? 'active' : '' %>">
+      Đã xuất bản <span class="badge"><%= counts.published %></span>
+    </a>
+    <a href="/admin/queue?status=rejected" class="tab-item <%= statusFilter === 'rejected' ? 'active' : '' %>">
+      Bị từ chối <span class="badge"><%= counts.rejected %></span>
+    </a>
+    <a href="/admin/queue?status=draft" class="tab-item <%= statusFilter === 'draft' ? 'active' : '' %>">
+      Bản nháp <span class="badge"><%= counts.draft %></span>
+    </a>
+    <a href="/admin/queue?status=archived" class="tab-item <%= statusFilter === 'archived' ? 'active' : '' %>">
+      Lưu trữ <span class="badge"><%= counts.archived %></span>
+    </a>
+    <a href="/admin/queue?status=all" class="tab-item <%= statusFilter === 'all' ? 'active' : '' %>">
+      Tất cả
+    </a>
+  </div>
+
+  <!-- Queue Post Cards -->
+  <% if (posts.length === 0) { %>
+    <div class="card p-5 text-center text-muted">
+      <h3>Không có bài viết nào trong mục này.</h3>
+      <p>Hàng đợi kiểm duyệt hiện tại đang trống.</p>
+    </div>
+  <% } else { %>
+    <div class="queue-list d-flex flex-column gap-4">
+      <% posts.forEach(post => { %>
+        <div class="card p-4 queue-card">
+          <div class="d-flex justify-between align-start mb-3">
+            <div>
+              <div class="d-flex align-center gap-2 mb-2">
+                <span class="category-pill"><%= post.category_name %></span>
+                <% if (post.status === 'pending') { %>
+                  <span class="status-badge status-pending">Chờ phê duyệt</span>
+                <% } else if (post.status === 'published') { %>
+                  <span class="status-badge status-published">Đã xuất bản</span>
+                <% } else if (post.status === 'rejected') { %>
+                  <span class="status-badge status-rejected">Bị từ chối</span>
+                <% } else if (post.status === 'archived') { %>
+                  <span class="status-badge status-archived">Lưu trữ</span>
+                <% } else { %>
+                  <span class="status-badge status-draft">Bản nháp</span>
+                <% } %>
+                <span class="text-muted small">&bull; Ngày tạo: <%= new Date(post.created_at).toLocaleString('vi-VN') %></span>
+              </div>
+              <h2 class="h4 mb-1">
+                <strong><%= post.title %></strong>
+              </h2>
+              <div class="post-meta text-muted small">
+                Tác giả: <strong><%= post.author_name %></strong> (@<%= post.author_username %>)
+              </div>
+            </div>
+
+            <% if (post.status === 'published') { %>
+              <a href="/posts/<%= post.slug %>" class="btn btn-sm btn-outline" target="_blank">Xem trang public</a>
+            <% } %>
+          </div>
+
+          <!-- Excerpt & Content Preview Toggle -->
+          <div class="queue-content mb-3 p-3 bg-light rounded">
+            <p class="mb-2 font-weight-500"><strong>Tóm tắt:</strong> <%= post.excerpt %></p>
+            <details>
+              <summary class="cursor-pointer text-primary">Xem nội dung bài viết đầy đủ (Markdown snippet)</summary>
+              <div class="mt-2 p-3 border rounded bg-white" style="max-height: 350px; overflow-y: auto; font-family: monospace; font-size: 0.9rem; white-space: pre-wrap;">
+<%= post.content %>
+              </div>
+            </details>
+          </div>
+
+          <% if (post.status === 'rejected' && post.review_note) { %>
+            <div class="alert alert-danger p-2 mb-3 small">
+              <strong>Lý do từ chối hiện tại:</strong> <%= post.review_note %>
+            </div>
+          <% } %>
+
+          <!-- Moderation Actions Form Bar -->
+          <div class="queue-actions d-flex justify-between align-center pt-3 border-top">
+            <div class="action-status-info small text-muted">
+              Cập nhật lần cuối: <%= new Date(post.updated_at).toLocaleString('vi-VN') %>
+            </div>
+
+            <div class="action-buttons-group d-flex gap-2">
+              <% if (post.status === 'pending' || post.status === 'draft' || post.status === 'rejected') { %>
+                <!-- Approve Button -->
+                <form action="/admin/posts/<%= post.id %>/status" method="POST" class="inline-form">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="action" value="publish">
+                  <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Xác nhận phê duyệt và xuất bản bài viết này?');">
+                    Xuất bản ngay
+                  </button>
+                </form>
+
+                <!-- Reject with Note Form -->
+                <form action="/admin/posts/<%= post.id %>/status" method="POST" class="d-flex align-center gap-2">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="action" value="reject">
+                  <input type="text" name="review_note" class="form-control form-control-sm" placeholder="Nhập lý do từ chối..." required style="min-width: 220px;">
+                  <button type="submit" class="btn btn-sm btn-danger">
+                    Từ chối
+                  </button>
+                </form>
+              <% } %>
+
+              <% if (post.status === 'published') { %>
+                <!-- Archive Button -->
+                <form action="/admin/posts/<%= post.id %>/status" method="POST" class="inline-form">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="action" value="archive">
+                  <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('Chuyển bài viết này sang trạng thái Lưu trữ?');">
+                    Lưu trữ bài viết
+                  </button>
+                </form>
+              <% } %>
+
+              <% if (post.status === 'archived') { %>
+                <!-- Restore Button -->
+                <form action="/admin/posts/<%= post.id %>/status" method="POST" class="inline-form">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="action" value="restore">
+                  <button type="submit" class="btn btn-sm btn-info" onclick="return confirm('Khôi phục bài viết này về trạng thái Đã xuất bản?');">
+                    Khôi phục xuất bản
+                  </button>
+                </form>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
+</main>
+
+<%- include('../partials/footer') %>

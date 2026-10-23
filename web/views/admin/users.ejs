@@ -1,0 +1,148 @@
+﻿<%- include('../partials/head') %>
+<%- include('../partials/navbar') %>
+
+<main class="container my-5">
+  <div class="admin-header mb-4">
+    <div class="d-flex justify-between align-center mb-3">
+      <div>
+        <h1 class="page-title mb-1">Quản lý Tài khoản (Users & Roles)</h1>
+        <p class="text-muted">Phân quyền vai trò hệ thống: Admin, Author (Tác giả), Member (Độc giả).</p>
+      </div>
+      <div>
+        <a href="/admin/dashboard" class="btn btn-outline">&larr; Quay lại Dashboard</a>
+      </div>
+    </div>
+
+    <!-- Admin Nav Submenu -->
+    <div class="admin-nav-bar d-flex gap-2 pb-2 border-bottom">
+      <a href="/admin/dashboard" class="btn btn-sm btn-outline">Dashboard</a>
+      <a href="/admin/queue" class="btn btn-sm btn-outline">Hàng đợi duyệt</a>
+      <a href="/admin/categories" class="btn btn-sm btn-outline">Chuyên mục</a>
+      <a href="/admin/tags" class="btn btn-sm btn-outline">Thẻ (Tags)</a>
+      <a href="/admin/comments" class="btn btn-sm btn-outline">Bình luận</a>
+      <a href="/admin/users" class="btn btn-sm btn-primary">Tài khoản</a>
+      <a href="/admin/media" class="btn btn-sm btn-outline">Media Library</a>
+    </div>
+  </div>
+
+  <% if (msg) { %>
+    <div class="alert alert-success mb-4"><%= msg %></div>
+  <% } %>
+  <% if (error) { %>
+    <div class="alert alert-danger mb-4"><%= error %></div>
+  <% } %>
+
+  <!-- Add User Modal / Form Accordion -->
+  <div class="card p-4 mb-4">
+    <details>
+      <summary class="cursor-pointer font-weight-bold text-primary h5 mb-0">+ Tạo tài khoản mới</summary>
+      <form action="/admin/users" method="POST" class="mt-4 pt-3 border-top">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+        <div class="row">
+          <div class="col-md-3 form-group mb-3">
+            <label class="form-label">Tên đăng nhập <span class="text-danger">*</span></label>
+            <input type="text" name="username" class="form-control" placeholder="username" required>
+          </div>
+          <div class="col-md-3 form-group mb-3">
+            <label class="form-label">Email <span class="text-danger">*</span></label>
+            <input type="email" name="email" class="form-control" placeholder="user@domain.com" required>
+          </div>
+          <div class="col-md-3 form-group mb-3">
+            <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
+            <input type="text" name="full_name" class="form-control" placeholder="Nguyễn Văn A" required>
+          </div>
+          <div class="col-md-3 form-group mb-3">
+            <label class="form-label">Mật khẩu khởi tạo <span class="text-danger">*</span></label>
+            <input type="password" name="password" class="form-control" placeholder="Ít nhất 8 ký tự" required>
+          </div>
+        </div>
+
+        <div class="row align-center">
+          <div class="col-md-4 form-group mb-3">
+            <label class="form-label">Vai trò ban đầu</label>
+            <select name="role" class="form-control">
+              <option value="member">Member (Độc giả - Bình luận)</option>
+              <option value="author">Author (Tác giả - Soạn & gửi duyệt)</option>
+              <option value="admin">Admin (Quản trị viên toàn quyền)</option>
+            </select>
+          </div>
+          <div class="col-md-8 text-right mt-3">
+            <button type="submit" class="btn btn-primary">Xác nhận tạo tài khoản</button>
+          </div>
+        </div>
+      </form>
+    </details>
+  </div>
+
+  <!-- Users List Table -->
+  <div class="card p-4">
+    <h3 class="card-title mb-3">Danh sách thành viên toàn hệ thống</h3>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">ID</th>
+            <th>Tài khoản & Email</th>
+            <th>Họ và tên</th>
+            <th>Vai trò (Phân quyền)</th>
+            <th class="text-center">Số bài viết</th>
+            <th class="text-center">Trạng thái</th>
+            <th class="text-right">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% users.forEach(u => { %>
+            <tr>
+              <td><%= u.id %></td>
+              <td>
+                <strong>@<%= u.username %></strong>
+                <div class="text-muted small"><%= u.email %></div>
+              </td>
+              <td><%= u.full_name %></td>
+              <td>
+                <form action="/admin/users/<%= u.id %>/role" method="POST" class="d-flex align-center gap-2">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <select name="role" class="form-control form-control-sm" style="width: 120px;" <%= u.id === currentUser.id ? 'disabled title="Không thể tự giáng quyền của chính mình"' : '' %>>
+                    <option value="member" <%= u.role === 'member' ? 'selected' : '' %>>Member</option>
+                    <option value="author" <%= u.role === 'author' ? 'selected' : '' %>>Author</option>
+                    <option value="admin" <%= u.role === 'admin' ? 'selected' : '' %>>Admin</option>
+                  </select>
+                  <% if (u.id !== currentUser.id) { %>
+                    <button type="submit" class="btn btn-sm btn-outline">Lưu</button>
+                  <% } %>
+                </form>
+              </td>
+              <td class="text-center">
+                <span class="badge badge-light"><%= u.post_count %></span>
+              </td>
+              <td class="text-center">
+                <% if (u.is_active) { %>
+                  <span class="status-badge status-published">Hoạt động</span>
+                <% } else { %>
+                  <span class="status-badge status-rejected">Bị khóa</span>
+                <% } %>
+              </td>
+              <td class="text-right">
+                <% if (u.id === currentUser.id) { %>
+                  <span class="text-muted small">Tài khoản này</span>
+                <% } else { %>
+                  <form action="/admin/users/<%= u.id %>/toggle-active" method="POST" class="inline-form" onsubmit="return confirm('Bạn có chắc muốn thay đổi trạng thái hoạt động của tài khoản này?');">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <% if (u.is_active) { %>
+                      <button type="submit" class="btn btn-sm btn-danger">Khóa</button>
+                    <% } else { %>
+                      <button type="submit" class="btn btn-sm btn-success">Mở khóa</button>
+                    <% } %>
+                  </form>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>

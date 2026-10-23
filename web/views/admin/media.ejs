@@ -1,0 +1,87 @@
+﻿<%- include('../partials/head') %>
+<%- include('../partials/navbar') %>
+
+<main class="container my-5">
+  <div class="admin-header mb-4">
+    <div class="d-flex justify-between align-center mb-3">
+      <div>
+        <h1 class="page-title mb-1">Thư viện Media (Tệp tải lên)</h1>
+        <p class="text-muted">Quản lý toàn bộ hình ảnh và tệp đính kèm được tải lên bởi các tác giả.</p>
+      </div>
+      <div>
+        <a href="/admin/dashboard" class="btn btn-outline">&larr; Quay lại Dashboard</a>
+      </div>
+    </div>
+
+    <!-- Admin Nav Submenu -->
+    <div class="admin-nav-bar d-flex gap-2 pb-2 border-bottom">
+      <a href="/admin/dashboard" class="btn btn-sm btn-outline">Dashboard</a>
+      <a href="/admin/queue" class="btn btn-sm btn-outline">Hàng đợi duyệt</a>
+      <a href="/admin/categories" class="btn btn-sm btn-outline">Chuyên mục</a>
+      <a href="/admin/tags" class="btn btn-sm btn-outline">Thẻ (Tags)</a>
+      <a href="/admin/comments" class="btn btn-sm btn-outline">Bình luận</a>
+      <a href="/admin/users" class="btn btn-sm btn-outline">Tài khoản</a>
+      <a href="/admin/media" class="btn btn-sm btn-primary">Media Library</a>
+    </div>
+  </div>
+
+  <% if (msg) { %>
+    <div class="alert alert-success mb-4"><%= msg %></div>
+  <% } %>
+  <% if (error) { %>
+    <div class="alert alert-danger mb-4"><%= error %></div>
+  <% } %>
+
+  <div class="card p-4">
+    <h3 class="card-title mb-3">Danh sách tệp tin đã tải lên (<%= mediaList.length %>)</h3>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 80px;">Xem trước</th>
+            <th>Tên gốc & Đường dẫn</th>
+            <th>Định dạng (MIME)</th>
+            <th>Kích thước</th>
+            <th>Người tải</th>
+            <th>Thời gian</th>
+            <th class="text-right">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (mediaList.length === 0) { %>
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">Chưa có tệp tải lên nào trong thư mục media.</td>
+            </tr>
+          <% } else { %>
+            <% mediaList.forEach(m => { %>
+              <tr>
+                <td>
+                  <a href="<%= m.file_path %>" target="_blank">
+                    <img src="<%= m.file_path %>" alt="<%= m.original_name %>" class="img-thumbnail" style="width: 60px; height: 45px; object-fit: cover; border-radius: 4px;">
+                  </a>
+                </td>
+                <td>
+                  <strong><%= m.original_name %></strong>
+                  <div><code><%= m.file_path %></code></div>
+                </td>
+                <td><span class="badge badge-light"><%= m.mime_type %></span></td>
+                <td><%= (m.size_bytes / 1024).toFixed(1) %> KB</td>
+                <td><%= m.uploader_name %> <span class="text-muted small">(@<%= m.uploader_username %>)</span></td>
+                <td><%= new Date(m.created_at).toLocaleString('vi-VN') %></td>
+                <td class="text-right">
+                  <a href="<%= m.file_path %>" target="_blank" class="btn btn-sm btn-outline">Xem</a>
+                  <form action="/admin/media/<%= m.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Bạn có chắc muốn xóa tệp này khỏi máy chủ?');">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                  </form>
+                </td>
+              </tr>
+            <% }); %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>

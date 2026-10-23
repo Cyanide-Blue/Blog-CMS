@@ -1,0 +1,14 @@
+﻿<%- include('../partials/head') %>
+<%- include('../partials/navbar') %>
+<main class="container error-page">
+  <div class="error-card card">
+    <div class="error-code">403</div>
+    <h1><%= typeof title !== 'undefined' ? title : 'Truy cập bị từ chối' %></h1>
+    <p><%= typeof message !== 'undefined' ? message : 'Bạn không có quyền thực hiện hành động này.' %></p>
+    <div class="error-actions">
+      <a href="/" class="btn btn-primary">Trở về Trang chủ</a>
+      <a href="/login" class="btn btn-outline">Đăng nhập tài khoản khác</a>
+    </div>
+  </div>
+</main>
+<%- include('../partials/footer') %>

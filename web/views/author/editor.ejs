@@ -1,0 +1,131 @@
+<%- include('../partials/head') %>
+<%- include('../partials/navbar') %>
+
+<main class="container my-5">
+  <div class="editor-header mb-4">
+    <div class="d-flex justify-between align-center">
+      <div>
+        <h1 class="page-title mb-1"><%= post && post.id ? 'Chỉnh sửa bài viết' : 'Soạn bài viết mới' %></h1>
+        <p class="text-muted">Biên soạn nội dung bằng định dạng Markdown tiêu chuẩn.</p>
+      </div>
+      <div>
+        <a href="/author/dashboard" class="btn btn-outline">&larr; Quay lại Bàn làm việc</a>
+      </div>
+    </div>
+  </div>
+
+  <% if (error) { %>
+    <div class="alert alert-danger mb-4">
+      <%= error %>
+    </div>
+  <% } %>
+
+  <form action="<%= post && post.id ? '/author/posts/' + post.id + '/save?_csrf=' + csrfToken : '/author/posts/save?_csrf=' + csrfToken %>"
+        method="POST"
+        enctype="multipart/form-data"
+        class="post-editor-form card p-4">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" id="csrf-token-field">
+
+    <div class="form-group mb-3">
+      <label for="post-title" class="form-label">Tiêu đề bài viết <span class="text-danger">*</span></label>
+      <input type="text"
+             id="post-title"
+             name="title"
+             class="form-control form-control-lg"
+             placeholder="Nhập tiêu đề bài viết ấn tượng..."
+             value="<%= post ? post.title : '' %>"
+             required>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-6 form-group">
+        <label for="post-category" class="form-label">Chuyên mục <span class="text-danger">*</span></label>
+        <select id="post-category" name="category_id" class="form-control" required>
+          <option value="">-- Chọn chuyên mục --</option>
+          <% categories.forEach(cat => { %>
+            <option value="<%= cat.id %>" <%= post && post.category_id == cat.id ? 'selected' : '' %>>
+              <%= cat.name %>
+            </option>
+          <% }); %>
+        </select>
+      </div>
+
+      <div class="col-md-6 form-group">
+        <label for="post-tags" class="form-label">Thẻ (Tags - tối đa 5 thẻ, cách nhau bằng dấu phẩy)</label>
+        <input type="text"
+               id="post-tags"
+               name="tags"
+               class="form-control"
+               placeholder="ví dụ: devops, docker, postgresql"
+               value="<%= typeof tagString !== 'undefined' ? tagString : '' %>">
+      </div>
+    </div>
+
+    <div class="form-group mb-3">
+      <label for="post-cover" class="form-label">Ảnh bìa (Hỗ trợ PNG, JPEG, WebP - Dung lượng tối đa 2MB)</label>
+      <input type="file"
+             id="post-cover"
+             name="cover_image"
+             class="form-control"
+             accept="image/png, image/jpeg, image/webp">
+      <% if (post && post.cover_image_path) { %>
+        <div class="mt-2 current-cover-preview">
+          <small class="text-muted">Ảnh bìa hiện tại:</small><br>
+          <img src="<%= post.cover_image_path %>" alt="Cover hiện tại" class="img-thumbnail" style="max-height: 120px; border-radius: 6px;" onerror="this.onerror=null; this.src='/images/covers/cover-1.svg';">
+        </div>
+      <% } %>
+    </div>
+
+    <div class="form-group mb-3">
+      <label for="post-excerpt" class="form-label">Tóm tắt ngắn (Excerpt - hiển thị ở trang danh sách bài viết)</label>
+      <textarea id="post-excerpt"
+                name="excerpt"
+                class="form-control"
+                rows="2"
+                placeholder="Tóm tắt nội dung chính trong 1-2 câu..."><%= post ? post.excerpt : '' %></textarea>
+    </div>
+
+    <!-- Markdown Editor and Preview Tabs -->
+    <div class="form-group mb-4">
+      <div class="editor-toolbar d-flex justify-between align-center mb-2">
+        <label for="markdown-input" class="form-label mb-0">Nội dung bài viết (Markdown) <span class="text-danger">*</span></label>
+        <div class="toolbar-actions">
+          <button type="button" id="btn-toggle-preview" class="btn btn-sm btn-outline">Xem trước nội dung (Live Preview)</button>
+        </div>
+      </div>
+
+      <div class="editor-container">
+        <textarea id="markdown-input"
+                  name="content"
+                  class="form-control markdown-textarea"
+                  rows="16"
+                  placeholder="Soạn nội dung bằng Markdown... Hỗ trợ cú pháp # Heading, **bold**, *italic*, `code`, ```sh block```, v.v."
+                  required><%= post ? post.content : '' %></textarea>
+        
+        <div id="preview-container" class="markdown-body p-4 border rounded d-none" style="background: var(--bg-card); min-height: 380px;">
+          <!-- Live rendered preview will be injected here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="editor-submit-bar d-flex justify-between align-center pt-3 border-top">
+      <a href="/author/dashboard" class="btn btn-outline">Hủy bỏ</a>
+      <div class="submit-buttons d-flex gap-2">
+        <button type="submit" name="action" value="save_draft" class="btn btn-secondary">
+          Lưu bản nháp
+        </button>
+        <button type="submit" name="action" value="submit_pending" class="btn btn-primary">
+          Gửi phê duyệt &rarr;
+        </button>
+        <% if (currentUser && currentUser.role === 'admin') { %>
+          <button type="submit" name="action" value="publish_direct" class="btn btn-success">
+            Xuất bản trực tiếp (Admin)
+          </button>
+        <% } %>
+      </div>
+    </div>
+  </form>
+</main>
+
+<%- include('../partials/footer') %>

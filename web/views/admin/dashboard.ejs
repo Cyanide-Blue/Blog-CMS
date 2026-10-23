@@ -1,0 +1,220 @@
+﻿<%- include('../partials/head') %>
+<%- include('../partials/navbar') %>
+
+<main class="container my-5">
+  <div class="admin-header mb-4">
+    <div class="d-flex justify-between align-center mb-3">
+      <div>
+        <h1 class="page-title mb-1">Bảng điều khiển Quản trị (Admin KPI)</h1>
+        <p class="text-muted">Tổng quan số liệu thống kê bài viết, độc giả, bình luận và hiệu năng hệ thống.</p>
+      </div>
+      <div>
+        <a href="/admin/queue" class="btn btn-warning">
+          Xem hàng đợi duyệt
+          <% if (kpi.pending_posts > 0) { %>
+            <span class="badge badge-light ml-1"><%= kpi.pending_posts %></span>
+          <% } %>
+        </a>
+      </div>
+    </div>
+
+    <!-- Admin Nav Submenu -->
+    <div class="admin-nav-bar d-flex gap-2 pb-2 border-bottom">
+      <a href="/admin/dashboard" class="btn btn-sm btn-primary">Dashboard</a>
+      <a href="/admin/queue" class="btn btn-sm btn-outline">Hàng đợi duyệt (<%= kpi.pending_posts %>)</a>
+      <a href="/admin/categories" class="btn btn-sm btn-outline">Chuyên mục</a>
+      <a href="/admin/tags" class="btn btn-sm btn-outline">Thẻ (Tags)</a>
+      <a href="/admin/comments" class="btn btn-sm btn-outline">Bình luận</a>
+      <a href="/admin/users" class="btn btn-sm btn-outline">Tài khoản</a>
+      <a href="/admin/media" class="btn btn-sm btn-outline">Media Library</a>
+    </div>
+  </div>
+
+  <!-- 4 Main KPI Cards -->
+  <div class="kpi-grid mb-5">
+    <div class="kpi-card card">
+      <div class="kpi-label">Tổng bài viết</div>
+      <div class="kpi-value text-primary"><%= kpi.total_posts %></div>
+      <div class="kpi-meta text-muted">
+        <span><%= kpi.published_posts %> đã xuất bản</span> &bull; 
+        <span><%= kpi.draft_posts %> bản nháp</span>
+      </div>
+    </div>
+
+    <div class="kpi-card card <%= kpi.pending_posts > 0 ? 'border-warning' : '' %>">
+      <div class="kpi-label">Đang chờ duyệt</div>
+      <div class="kpi-value <%= kpi.pending_posts > 0 ? 'text-warning' : 'text-muted' %>">
+        <%= kpi.pending_posts %>
+      </div>
+      <div class="kpi-meta text-muted">
+        <% if (kpi.pending_posts > 0) { %>
+          <a href="/admin/queue" class="text-warning font-weight-bold">Cần phê duyệt ngay &rarr;</a>
+        <% } else { %>
+          <span>Không có bài chờ duyệt</span>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="kpi-card card">
+      <div class="kpi-label">Tổng lượt xem</div>
+      <div class="kpi-value text-success"><%= Number(kpi.total_views).toLocaleString() %></div>
+      <div class="kpi-meta text-muted">Lượt xem trên toàn bộ bài viết</div>
+    </div>
+
+    <div class="kpi-card card">
+      <div class="kpi-label">Tổng tài khoản</div>
+      <div class="kpi-value text-info"><%= kpi.total_users %></div>
+      <div class="kpi-meta text-muted">
+        <span><%= kpi.author_users %> tác giả</span> &bull; 
+        <span><%= kpi.member_users %> độc giả</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monthly Stats Chart & Breakdown -->
+  <div class="row mb-5">
+    <div class="col-lg-8">
+      <div class="card p-4">
+        <h3 class="card-title mb-3">Tốc độ xuất bản bài viết theo tháng</h3>
+        <% if (monthlyStats.length === 0) { %>
+          <p class="text-muted text-center py-4">Chưa có bài viết nào được xuất bản trong các tháng gần đây.</p>
+        <% } else { %>
+          <% 
+            const maxMonthly = Math.max(...monthlyStats.map(m => parseInt(m.post_count, 10)), 1);
+          %>
+          <div class="css-chart-bar-container">
+            <% monthlyStats.forEach(m => { 
+                const count = parseInt(m.post_count, 10);
+                const percent = Math.round((count / maxMonthly) * 100);
+            %>
+              <div class="chart-bar-row mb-3">
+                <div class="chart-bar-label text-muted"><%= m.month_str %></div>
+                <div class="chart-bar-track flex-grow-1 mx-3">
+                  <div class="chart-bar-fill" style="width: <%= Math.max(percent, 8) %>%;">
+                    <span class="chart-bar-count"><%= count %> bài</span>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card p-4">
+        <h3 class="card-title mb-3">Thống kê bình luận</h3>
+        <ul class="list-group list-group-flush mb-4">
+          <li class="list-group-item d-flex justify-between align-center px-0">
+            <span>Tổng số bình luận</span>
+            <strong><%= kpi.total_comments %></strong>
+          </li>
+          <li class="list-group-item d-flex justify-between align-center px-0">
+            <span>Bình luận hiển thị</span>
+            <strong class="text-success"><%= kpi.approved_comments %></strong>
+          </li>
+          <li class="list-group-item d-flex justify-between align-center px-0">
+            <span>Bình luận bị ẩn</span>
+            <strong class="text-danger"><%= kpi.hidden_comments %></strong>
+          </li>
+        </ul>
+        <a href="/admin/comments" class="btn btn-outline btn-block">Quản lý kiểm duyệt bình luận</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top 10 Posts Table -->
+  <div class="card mb-5">
+    <div class="card-header bg-transparent p-4 pb-2 border-0">
+      <h3 class="card-title mb-1">Top 10 bài viết được đọc nhiều nhất</h3>
+      <p class="text-muted small">Xếp hạng theo tổng lượt xem thực tế ghi nhận từ độc giả</p>
+    </div>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 50px;">#</th>
+            <th>Tiêu đề bài viết</th>
+            <th>Tác giả</th>
+            <th>Chuyên mục</th>
+            <th>Ngày xuất bản</th>
+            <th class="text-right">Lượt xem</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (topPosts.length === 0) { %>
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted">Chưa có bài viết nào được xuất bản.</td>
+            </tr>
+          <% } else { %>
+            <% topPosts.forEach((p, idx) => { %>
+              <tr>
+                <td class="font-weight-bold text-muted"><%= idx + 1 %></td>
+                <td>
+                  <a href="/posts/<%= p.slug %>" target="_blank" class="post-title-link">
+                    <%= p.title %>
+                  </a>
+                </td>
+                <td><%= p.author_name %></td>
+                <td><span class="category-pill"><%= p.category_name %></span></td>
+                <td><%= p.published_at ? new Date(p.published_at).toLocaleDateString('vi-VN') : 'N/A' %></td>
+                <td class="text-right">
+                  <span class="view-pill"><%= Number(p.view_count).toLocaleString() %> views</span>
+                </td>
+              </tr>
+            <% }); %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Category and Author Breakdown -->
+  <div class="row">
+    <div class="col-md-6 mb-4">
+      <div class="card p-4">
+        <h3 class="card-title mb-3">Phân bố bài viết theo Chuyên mục</h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Chuyên mục</th>
+              <th class="text-right">Số bài viết</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% categoryStats.forEach(c => { %>
+              <tr>
+                <td><%= c.name %></td>
+                <td class="text-right font-weight-bold"><%= c.post_count %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+      <div class="card p-4">
+        <h3 class="card-title mb-3">Tác giả tích cực nhất</h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Tác giả</th>
+              <th class="text-right">Số bài đã viết</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% authorStats.forEach(a => { %>
+              <tr>
+                <td><%= a.full_name %> <span class="text-muted small">(@<%= a.username %>)</span></td>
+                <td class="text-right font-weight-bold"><%= a.post_count %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,14 @@
+﻿<%- include('../partials/head') %>
+<%- include('../partials/navbar') %>
+<main class="container error-page">
+  <div class="error-card card">
+    <div class="error-code">404</div>
+    <h1><%= typeof title !== 'undefined' ? title : 'Không tìm thấy trang' %></h1>
+    <p><%= typeof message !== 'undefined' ? message : 'Nội dung bạn đang tìm kiếm không tồn tại hoặc đã được gỡ bỏ.' %></p>
+    <div class="error-actions">
+      <a href="/" class="btn btn-primary">Trở về Trang chủ</a>
+      <a href="/posts" class="btn btn-outline">Xem các bài viết khác</a>
+    </div>
+  </div>
+</main>
+<%- include('../partials/footer') %>

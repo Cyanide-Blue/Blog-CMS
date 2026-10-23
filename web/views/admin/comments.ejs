@@ -1,0 +1,106 @@
+﻿<%- include('../partials/head') %>
+<%- include('../partials/navbar') %>
+
+<main class="container my-5">
+  <div class="admin-header mb-4">
+    <div class="d-flex justify-between align-center mb-3">
+      <div>
+        <h1 class="page-title mb-1">Kiểm duyệt Bình luận (Comments Moderation)</h1>
+        <p class="text-muted">Quản lý phản hồi của độc giả, ẩn bình luận vi phạm hoặc xóa spam.</p>
+      </div>
+      <div>
+        <a href="/admin/dashboard" class="btn btn-outline">&larr; Quay lại Dashboard</a>
+      </div>
+    </div>
+
+    <!-- Admin Nav Submenu -->
+    <div class="admin-nav-bar d-flex gap-2 pb-2 border-bottom">
+      <a href="/admin/dashboard" class="btn btn-sm btn-outline">Dashboard</a>
+      <a href="/admin/queue" class="btn btn-sm btn-outline">Hàng đợi duyệt</a>
+      <a href="/admin/categories" class="btn btn-sm btn-outline">Chuyên mục</a>
+      <a href="/admin/tags" class="btn btn-sm btn-outline">Thẻ (Tags)</a>
+      <a href="/admin/comments" class="btn btn-sm btn-primary">Bình luận</a>
+      <a href="/admin/users" class="btn btn-sm btn-outline">Tài khoản</a>
+      <a href="/admin/media" class="btn btn-sm btn-outline">Media Library</a>
+    </div>
+  </div>
+
+  <% if (msg) { %>
+    <div class="alert alert-success mb-4"><%= msg %></div>
+  <% } %>
+
+  <div class="card p-4">
+    <h3 class="card-title mb-3">100 bình luận gần đây nhất</h3>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">ID</th>
+            <th>Người gửi</th>
+            <th>Bài viết liên quan</th>
+            <th style="min-width: 250px;">Nội dung bình luận</th>
+            <th>Thời gian</th>
+            <th class="text-center">Trạng thái</th>
+            <th class="text-right">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (comments.length === 0) { %>
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">Chưa có bình luận nào trên hệ thống.</td>
+            </tr>
+          <% } else { %>
+            <% comments.forEach(c => { %>
+              <tr>
+                <td><%= c.id %></td>
+                <td>
+                  <strong><%= c.user_name %></strong>
+                  <div class="text-muted small">@<%= c.username %></div>
+                </td>
+                <td>
+                  <a href="/posts/<%= c.post_slug %>" target="_blank" class="post-title-link">
+                    <%= c.post_title %>
+                  </a>
+                </td>
+                <td>
+                  <div class="comment-content-snippet">
+                    <%= c.content %>
+                  </div>
+                </td>
+                <td class="small"><%= new Date(c.created_at).toLocaleString('vi-VN') %></td>
+                <td class="text-center">
+                  <% if (c.status === 'approved') { %>
+                    <span class="status-badge status-published">Hiển thị</span>
+                  <% } else { %>
+                    <span class="status-badge status-rejected">Bị ẩn</span>
+                  <% } %>
+                </td>
+                <td class="text-right actions-cell">
+                  <!-- Toggle Visibility -->
+                  <form action="/comments/<%= c.id %>/toggle" method="POST" class="inline-form">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="return_url" value="/admin/comments">
+                    <% if (c.status === 'approved') { %>
+                      <button type="submit" class="btn btn-sm btn-warning">Ẩn</button>
+                    <% } else { %>
+                      <button type="submit" class="btn btn-sm btn-success">Hiện</button>
+                    <% } %>
+                  </form>
+
+                  <!-- Delete Comment -->
+                  <form action="/comments/<%= c.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Bạn có chắc muốn xóa vĩnh viễn bình luận này?');">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="return_url" value="/admin/comments">
+                    <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                  </form>
+                </td>
+              </tr>
+            <% }); %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>

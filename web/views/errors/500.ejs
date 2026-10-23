@@ -1,0 +1,13 @@
+﻿<%- include('../partials/head') %>
+<%- include('../partials/navbar') %>
+<main class="container error-page">
+  <div class="error-card card">
+    <div class="error-code">500</div>
+    <h1><%= typeof title !== 'undefined' ? title : 'Lỗi máy chủ nội bộ' %></h1>
+    <p><%= typeof error !== 'undefined' ? error : 'Hệ thống đang gặp sự cố kỹ thuật. Vui lòng thử lại sau.' %></p>
+    <div class="error-actions">
+      <a href="/" class="btn btn-primary">Về Trang chủ</a>
+    </div>
+  </div>
+</main>
+<%- include('../partials/footer') %>

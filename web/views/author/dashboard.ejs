@@ -1,0 +1,106 @@
+﻿<%- include('../partials/head') %>
+<%- include('../partials/navbar') %>
+
+<main class="container my-5">
+  <div class="dashboard-header d-flex justify-between align-center mb-4">
+    <div>
+      <h1 class="page-title mb-1">Bàn làm việc Tác giả</h1>
+      <p class="text-muted">Quản lý vòng đời bài viết: Bản nháp &rarr; Gửi duyệt &rarr; Xuất bản.</p>
+    </div>
+    <div>
+      <a href="/author/posts/new" class="btn btn-primary">+ Soạn bài viết mới</a>
+    </div>
+  </div>
+
+  <!-- Status Tabs -->
+  <div class="tabs mb-4">
+    <a href="/author/dashboard?status=all" class="tab-item <%= statusFilter === 'all' ? 'active' : '' %>">
+      Tất cả <span class="badge"><%= counts.all %></span>
+    </a>
+    <a href="/author/dashboard?status=draft" class="tab-item <%= statusFilter === 'draft' ? 'active' : '' %>">
+      Bản nháp <span class="badge"><%= counts.draft %></span>
+    </a>
+    <a href="/author/dashboard?status=pending" class="tab-item <%= statusFilter === 'pending' ? 'active' : '' %>">
+      Chờ duyệt <span class="badge"><%= counts.pending %></span>
+    </a>
+    <a href="/author/dashboard?status=published" class="tab-item <%= statusFilter === 'published' ? 'active' : '' %>">
+      Đã xuất bản <span class="badge"><%= counts.published %></span>
+    </a>
+    <a href="/author/dashboard?status=rejected" class="tab-item <%= statusFilter === 'rejected' ? 'active' : '' %>">
+      Bị từ chối <span class="badge"><%= counts.rejected %></span>
+    </a>
+    <a href="/author/dashboard?status=archived" class="tab-item <%= statusFilter === 'archived' ? 'active' : '' %>">
+      Lưu trữ <span class="badge"><%= counts.archived %></span>
+    </a>
+  </div>
+
+  <!-- Posts Table -->
+  <div class="card">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Tiêu đề bài viết</th>
+            <th>Chuyên mục</th>
+            <th>Trạng thái</th>
+            <th class="text-center">Lượt xem</th>
+            <th>Cập nhật lần cuối</th>
+            <th class="text-right">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (posts.length === 0) { %>
+            <tr>
+              <td colspan="6" class="text-center py-5 text-muted">
+                Chưa có bài viết nào trong mục này. <a href="/author/posts/new">Tạo bài viết đầu tiên ngay!</a>
+              </td>
+            </tr>
+          <% } else { %>
+            <% posts.forEach(post => { %>
+              <tr>
+                <td>
+                  <div class="post-title-cell">
+                    <strong><%= post.title %></strong>
+                    <% if (post.status === 'rejected' && post.review_note) { %>
+                      <div class="review-feedback">
+                        <span class="feedback-label">Ghi chú phản hồi:</span> <%= post.review_note %>
+                      </div>
+                    <% } %>
+                  </div>
+                </td>
+                <td><span class="category-pill"><%= post.category_name %></span></td>
+                <td>
+                  <% if (post.status === 'draft') { %>
+                    <span class="status-badge status-draft">Bản nháp</span>
+                  <% } else if (post.status === 'pending') { %>
+                    <span class="status-badge status-pending">Chờ duyệt</span>
+                  <% } else if (post.status === 'published') { %>
+                    <span class="status-badge status-published">Đã xuất bản</span>
+                  <% } else if (post.status === 'rejected') { %>
+                    <span class="status-badge status-rejected">Bị từ chối</span>
+                  <% } else if (post.status === 'archived') { %>
+                    <span class="status-badge status-archived">Lưu trữ</span>
+                  <% } %>
+                </td>
+                <td class="text-center"><%= post.view_count %></td>
+                <td><%= new Date(post.updated_at).toLocaleString('vi-VN') %></td>
+                <td class="text-right actions-cell">
+                  <% if (post.status === 'published') { %>
+                    <a href="/posts/<%= post.slug %>" class="btn btn-sm btn-outline" target="_blank">Xem</a>
+                  <% } %>
+                  <a href="/author/posts/<%= post.id %>/edit" class="btn btn-sm btn-secondary">Sửa</a>
+                  <form action="/author/posts/<%= post.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài viết này không?');">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                  </form>
+                </td>
+              </tr>
+            <% }); %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>

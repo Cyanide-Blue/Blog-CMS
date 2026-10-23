@@ -1,0 +1,264 @@
+<%- include('../partials/head') %>
+<%- include('../partials/navbar') %>
+
+<div class="reading-progress-bar" id="reading-progress"></div>
+
+<main class="container post-detail-page">
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb-nav">
+    <a href="/">Trang chủ</a>
+    <span class="breadcrumb-separator">/</span>
+    <a href="/posts">Bài viết</a>
+    <span class="breadcrumb-separator">/</span>
+    <a href="/posts?category=<%= post.category_slug %>"><%= post.category_name %></a>
+    <span class="breadcrumb-separator">/</span>
+    <span class="breadcrumb-current"><%= post.title %></span>
+  </nav>
+
+  <% if (post.status !== 'published') { %>
+    <div class="alert alert-warning post-status-banner">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      <div>
+        <strong>Chế độ xem trước:</strong> Bài viết này đang ở trạng thái 
+        <span class="badge badge-<%= post.status %>"><%= post.status.toUpperCase() %></span>.
+        Chỉ có tác giả và quản trị viên mới thấy được nội dung này.
+        <% if (post.review_note) { %>
+          <p class="review-note-box"><strong>Ghi chú kiểm duyệt:</strong> <%= post.review_note %></p>
+        <% } %>
+      </div>
+    </div>
+  <% } %>
+
+  <article class="post-article card">
+    <header class="post-header">
+      <div class="post-meta-top">
+        <a href="/posts?category=<%= post.category_slug %>" class="category-badge-floating"><%= post.category_name %></a>
+        <span class="post-date">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <%= post.published_at ? new Date(post.published_at).toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Chưa xuất bản' %>
+        </span>
+        <span class="post-views">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          <%= post.view_count %> lượt xem
+        </span>
+      </div>
+      <h1 class="post-main-title"><%= post.title %></h1>
+      <p class="post-lead"><%= post.excerpt %></p>
+
+      <div class="post-author-bar">
+        <div class="author-avatar-chip author-avatar-lg"><%= (post.author_name || 'U').charAt(0).toUpperCase() %></div>
+        <div class="author-details">
+          <a href="/authors/<%= post.author_username %>" class="author-name-link"><%= post.author_name %></a>
+          <span class="author-role">@<%= post.author_username %></span>
+        </div>
+        <% if (isAuthor || isAdmin) { %>
+          <div class="author-actions-top">
+            <a href="/author/posts/<%= post.id %>/edit" class="btn btn-outline btn-sm">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              Chỉnh sửa bài viết
+            </a>
+          </div>
+        <% } %>
+      </div>
+    </header>
+
+    <% if (post.cover_image_path) { %>
+      <div class="post-featured-image">
+        <img src="<%= post.cover_image_path %>" 
+             alt="<%= post.title %>"
+             onerror="this.onerror=null; this.src='/images/covers/cover-1.svg';">
+      </div>
+    <% } %>
+
+    <div class="post-content-body markdown-body">
+      <%- post.renderedContent %>
+    </div>
+
+    <footer class="post-footer-tags">
+      <div class="tags-group">
+        <strong>Thẻ:</strong>
+        <% (post.tags || []).forEach(t => { %>
+          <a href="/posts?tag=<%= t.slug %>" class="tag-pill">#<%= t.name %></a>
+        <% }) %>
+      </div>
+    </footer>
+  </article>
+
+  <section class="author-bio-card card">
+    <div class="author-bio-avatar"><%= post.author_name.charAt(0) %></div>
+    <div class="author-bio-info">
+      <h3><a href="/authors/<%= post.author_username %>"><%= post.author_name %></a></h3>
+      <p><%= post.author_bio || 'Tác giả chia sẻ các kiến thức và kinh nghiệm thực tiễn về công nghệ phần mềm.' %></p>
+      <a href="/authors/<%= post.author_username %>" class="author-all-posts-link">Xem tất cả bài viết của <%= post.author_name %> &rarr;</a>
+    </div>
+  </section>
+
+  <% if (relatedPosts.length > 0) { %>
+    <section class="related-posts-section">
+      <h2>Bài viết liên quan trong "<%= post.category_name %>"</h2>
+      <div class="related-grid">
+        <% relatedPosts.forEach(rel => { %>
+          <div class="related-card card">
+            <a href="/posts/<%= rel.slug %>">
+              <h4><%= rel.title %></h4>
+            </a>
+            <p><%= rel.excerpt %></p>
+            <span class="text-muted"><%= new Date(rel.published_at).toLocaleDateString('vi-VN') %> &bull; <%= rel.view_count %> xem</span>
+          </div>
+        <% }) %>
+      </div>
+    </section>
+  <% } %>
+
+  <!-- Comments Section -->
+  <section class="comments-section card" id="comments">
+    <h2>Bình luận (<%= parentComments.length %>)</h2>
+
+    <% if (commentError) { %>
+      <div class="alert alert-danger"><%= commentError %></div>
+    <% } %>
+
+    <% if (currentUser) { %>
+      <form action="/comments" method="POST" class="comment-form" id="comment-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="post_id" value="<%= post.id %>">
+        <input type="hidden" name="return_slug" value="<%= post.slug %>">
+
+        <div class="form-group">
+          <label for="comment-content">Viết bình luận của bạn (tối đa 1000 ký tự):</label>
+          <textarea id="comment-content" name="content" rows="3" class="form-control" placeholder="Chia sẻ suy nghĩ hoặc câu hỏi của bạn..." required maxlength="1000"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Gửi bình luận</button>
+      </form>
+    <% } else { %>
+      <div class="login-prompt">
+        <p>Vui lòng <a href="/login?returnTo=/posts/<%= post.slug %>">đăng nhập</a> để tham gia thảo luận và gửi bình luận.</p>
+      </div>
+    <% } %>
+
+    <div class="comments-list">
+      <% if (parentComments.length === 0) { %>
+        <p class="text-muted no-comments">Chưa có bình luận nào. Hãy là người đầu tiên để lại ý kiến!</p>
+      <% } %>
+
+      <% parentComments.forEach(c => { %>
+        <div class="comment-item <%= c.status === 'hidden' ? 'comment-hidden' : '' %>" id="comment-<%= c.id %>">
+          <div class="comment-avatar"><%= c.full_name.charAt(0) %></div>
+          <div class="comment-body">
+            <div class="comment-header">
+              <span class="comment-author"><strong><%= c.full_name %></strong> (<%= c.username %>)</span>
+              <span class="role-badge role-<%= c.role %>"><%= c.role %></span>
+              <span class="comment-time">&bull; <%= new Date(c.created_at).toLocaleString('vi-VN') %></span>
+              <% if (c.status === 'hidden') { %>
+                <span class="badge badge-warning">Đã ẩn</span>
+              <% } %>
+            </div>
+
+            <div class="comment-text">
+              <% if (c.status === 'hidden' && !isAuthor && !isAdmin) { %>
+                <em class="text-muted">[Bình luận này đã bị ẩn bởi tác giả hoặc quản trị viên]</em>
+              <% } else { %>
+                <p><%= c.content %></p>
+              <% } %>
+            </div>
+
+            <div class="comment-actions">
+              <% if (currentUser) { %>
+                <button type="button" class="btn-link reply-toggle-btn" onclick="toggleReplyForm('<%= c.id %>')">Trả lời</button>
+              <% } %>
+
+              <% if (currentUser && (currentUser.id === c.user_id || isAdmin)) { %>
+                <form action="/comments/<%= c.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Bạn có chắc muốn xóa bình luận này?');">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="return_url" value="/posts/<%= post.slug %>">
+                  <button type="submit" class="btn-link text-danger">Xóa</button>
+                </form>
+              <% } %>
+
+              <% if (currentUser && (isAuthor || isAdmin)) { %>
+                <form action="/comments/<%= c.id %>/toggle" method="POST" class="inline-form">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="return_url" value="/posts/<%= post.slug %>">
+                  <button type="submit" class="btn-link"><%= c.status === 'approved' ? 'Ẩn' : 'Hiện' %></button>
+                </form>
+              <% } %>
+            </div>
+
+            <!-- Reply Form (Hidden by default) -->
+            <% if (currentUser) { %>
+              <div class="reply-form-container" id="reply-form-<%= c.id %>" style="display: none; margin-top: 10px;">
+                <form action="/comments" method="POST" class="comment-form">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="post_id" value="<%= post.id %>">
+                  <input type="hidden" name="parent_id" value="<%= c.id %>">
+                  <input type="hidden" name="return_slug" value="<%= post.slug %>">
+
+                  <div class="form-group">
+                    <textarea name="content" rows="2" class="form-control" placeholder="Trả lời <%= c.full_name %>..." required maxlength="1000"></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-sm">Gửi trả lời</button>
+                  <button type="button" class="btn btn-outline btn-sm" onclick="toggleReplyForm('<%= c.id %>')">Hủy</button>
+                </form>
+              </div>
+            <% } %>
+
+            <!-- Child Replies -->
+            <% if (repliesMap[c.id] && repliesMap[c.id].length > 0) { %>
+              <div class="replies-list">
+                <% repliesMap[c.id].forEach(r => { %>
+                  <div class="reply-item <%= r.status === 'hidden' ? 'comment-hidden' : '' %>" id="comment-<%= r.id %>">
+                    <div class="comment-avatar reply-avatar"><%= r.full_name.charAt(0) %></div>
+                    <div class="comment-body">
+                      <div class="comment-header">
+                        <span class="comment-author"><strong><%= r.full_name %></strong></span>
+                        <span class="role-badge role-<%= r.role %>"><%= r.role %></span>
+                        <span class="comment-time">&bull; <%= new Date(r.created_at).toLocaleString('vi-VN') %></span>
+                        <% if (r.status === 'hidden') { %>
+                          <span class="badge badge-warning">Đã ẩn</span>
+                        <% } %>
+                      </div>
+                      <div class="comment-text">
+                        <% if (r.status === 'hidden' && !isAuthor && !isAdmin) { %>
+                          <em class="text-muted">[Bình luận này đã bị ẩn]</em>
+                        <% } else { %>
+                          <p><%= r.content %></p>
+                        <% } %>
+                      </div>
+                      <div class="comment-actions">
+                        <% if (currentUser && (currentUser.id === r.user_id || isAdmin)) { %>
+                          <form action="/comments/<%= r.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Bạn có chắc muốn xóa bình luận này?');">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <input type="hidden" name="return_url" value="/posts/<%= post.slug %>">
+                            <button type="submit" class="btn-link text-danger">Xóa</button>
+                          </form>
+                        <% } %>
+                        <% if (currentUser && (isAuthor || isAdmin)) { %>
+                          <form action="/comments/<%= r.id %>/toggle" method="POST" class="inline-form">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <input type="hidden" name="return_url" value="/posts/<%= post.slug %>">
+                            <button type="submit" class="btn-link"><%= r.status === 'approved' ? 'Ẩn' : 'Hiện' %></button>
+                          </form>
+                        <% } %>
+                      </div>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </section>
+</main>
+
+<script>
+function toggleReplyForm(id) {
+  const form = document.getElementById('reply-form-' + id);
+  if (form) {
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  }
+}
+</script>
+
+<%- include('../partials/footer') %>

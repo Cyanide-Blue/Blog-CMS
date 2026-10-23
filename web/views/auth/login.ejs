@@ -1,0 +1,36 @@
+﻿<%- include('../partials/head') %>
+<%- include('../partials/navbar') %>
+<main class="container auth-container">
+  <div class="auth-card card">
+    <div class="auth-header">
+      <h2>Đăng nhập Hệ thống</h2>
+      <p>Truy cập vào tài khoản Blog/CMS của bạn</p>
+    </div>
+
+    <% if (error) { %>
+      <div class="alert alert-danger"><%= error %></div>
+    <% } %>
+
+    <form action="/login" method="POST" class="auth-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="returnTo" value="<%= returnTo || '' %>">
+
+      <div class="form-group">
+        <label for="username">Tên đăng nhập hoặc Email</label>
+        <input type="text" id="username" name="username" class="form-control" placeholder="admin, tacgia01, docgia01..." required autofocus>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Mật khẩu</label>
+        <input type="password" id="password" name="password" class="form-control" placeholder="Nhập mật khẩu" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">Đăng nhập ngay</button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Chưa có tài khoản? <a href="/register">Đăng ký thành viên mới</a></p>
+    </div>
+  </div>
+</main>
+<%- include('../partials/footer') %>

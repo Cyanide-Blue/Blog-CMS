@@ -1,0 +1,123 @@
+﻿<%- include('../partials/head') %>
+<%- include('../partials/navbar') %>
+
+<main class="container my-5">
+  <div class="admin-header mb-4">
+    <div class="d-flex justify-between align-center mb-3">
+      <div>
+        <h1 class="page-title mb-1">Quản lý Chuyên mục (Categories)</h1>
+        <p class="text-muted">Phân loại bài viết theo các chủ đề chuyên sâu.</p>
+      </div>
+      <div>
+        <a href="/admin/dashboard" class="btn btn-outline">&larr; Quay lại Dashboard</a>
+      </div>
+    </div>
+
+    <!-- Admin Nav Submenu -->
+    <div class="admin-nav-bar d-flex gap-2 pb-2 border-bottom">
+      <a href="/admin/dashboard" class="btn btn-sm btn-outline">Dashboard</a>
+      <a href="/admin/queue" class="btn btn-sm btn-outline">Hàng đợi duyệt</a>
+      <a href="/admin/categories" class="btn btn-sm btn-primary">Chuyên mục</a>
+      <a href="/admin/tags" class="btn btn-sm btn-outline">Thẻ (Tags)</a>
+      <a href="/admin/comments" class="btn btn-sm btn-outline">Bình luận</a>
+      <a href="/admin/users" class="btn btn-sm btn-outline">Tài khoản</a>
+      <a href="/admin/media" class="btn btn-sm btn-outline">Media Library</a>
+    </div>
+  </div>
+
+  <% if (msg) { %>
+    <div class="alert alert-success mb-4"><%= msg %></div>
+  <% } %>
+  <% if (error) { %>
+    <div class="alert alert-danger mb-4"><%= error %></div>
+  <% } %>
+
+  <div class="row">
+    <!-- Form Create Category -->
+    <div class="col-md-4 mb-4">
+      <div class="card p-4">
+        <h3 class="card-title mb-3">Thêm chuyên mục mới</h3>
+        <form action="/admin/categories" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+          <div class="form-group mb-3">
+            <label for="cat-name" class="form-label">Tên chuyên mục <span class="text-danger">*</span></label>
+            <input type="text" id="cat-name" name="name" class="form-control" placeholder="ví dụ: DevOps & CI/CD" required>
+          </div>
+
+          <div class="form-group mb-3">
+            <label for="cat-slug" class="form-label">Slug URL (tùy chọn)</label>
+            <input type="text" id="cat-slug" name="slug" class="form-control" placeholder="tự động tạo nếu để trống">
+          </div>
+
+          <div class="form-group mb-3">
+            <label for="cat-desc" class="form-label">Mô tả tóm tắt</label>
+            <textarea id="cat-desc" name="description" class="form-control" rows="3" placeholder="Mô tả về chủ đề chuyên mục..."></textarea>
+          </div>
+
+          <div class="form-group mb-4">
+            <label for="cat-order" class="form-label">Thứ tự hiển thị (Sort order)</label>
+            <input type="number" id="cat-order" name="sort_order" class="form-control" value="0">
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">Tạo chuyên mục mới</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Categories List Table -->
+    <div class="col-md-8">
+      <div class="card p-4">
+        <h3 class="card-title mb-3">Danh sách chuyên mục hiện tại</h3>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 40px;">STT</th>
+                <th>Tên chuyên mục</th>
+                <th>Slug</th>
+                <th class="text-center">Số bài viết</th>
+                <th class="text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (categories.length === 0) { %>
+                <tr>
+                  <td colspan="5" class="text-center py-4 text-muted">Chưa có chuyên mục nào.</td>
+                </tr>
+              <% } else { %>
+                <% categories.forEach((c, index) => { %>
+                  <tr>
+                    <td><%= index + 1 %></td>
+                    <td>
+                      <strong><%= c.name %></strong>
+                      <% if (c.description) { %>
+                        <div class="text-muted small"><%= c.description %></div>
+                      <% } %>
+                    </td>
+                    <td><code><%= c.slug %></code></td>
+                    <td class="text-center">
+                      <span class="badge badge-light"><%= c.post_count %> bài</span>
+                    </td>
+                    <td class="text-right">
+                      <% if (parseInt(c.post_count, 10) > 0) { %>
+                        <span class="text-muted small" title="Không thể xóa vì đã có bài viết thuộc chuyên mục này">Đang sử dụng</span>
+                      <% } else { %>
+                        <form action="/admin/categories/<%= c.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Bạn có chắc muốn xóa chuyên mục này?');">
+                          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                          <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                        </form>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>

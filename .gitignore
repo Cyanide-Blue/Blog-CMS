@@ -1,0 +1,27 @@
+# Environment & secrets
+.env
+*.env.local
+
+# SSL Certificates & Keys (Chi commit gen-cert.sh, khong commit certs)
+nginx/certs/*
+!nginx/certs/.gitkeep
+
+# Dependencies
+node_modules/
+
+# Evidence & audit
+evidence/
+docs/AUDIT.md
+
+# Uploads (giu lai thu muc qua .gitkeep)
+web/public/uploads/*
+!web/public/uploads/.gitkeep
+
+# Docker overrides & logs & data
+docker-compose.override.yml
+*.log
+data/
+db_data/
+grafana_data/
+prometheus_data/
+loki_data/

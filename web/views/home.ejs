@@ -1,0 +1,219 @@
+<%- include('partials/head') %>
+<%- include('partials/navbar') %>
+
+<main class="container home-page">
+  <% if (typeof registered !== 'undefined' && registered) { %>
+    <div class="alert alert-success">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+      <span>Đăng ký thành công! Chào mừng bạn gia nhập cộng đồng DTC Blog/CMS.</span>
+    </div>
+  <% } %>
+
+  <!-- Modern Hero Section -->
+  <section class="hero-section">
+    <div class="hero-glow-bg"></div>
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="pulse-dot"></span>
+        <span class="badge-text">Bài tập lớn DevOps &bull; MSSV: DTC245180035 &bull; Hà Đức Trung</span>
+      </div>
+      <h1 class="hero-title">
+        Khám phá Kiến trúc Hệ thống <br>
+        <span class="gradient-text">& Kỹ thuật Phần mềm</span>
+      </h1>
+      <p class="hero-desc">
+        Nền tảng tri thức chuyên sâu về Containerization (Docker), Microservices, CI/CD Pipeline, Tối ưu cơ sở dữ liệu PostgreSQL và Giám sát hạ tầng chuẩn công nghiệp.
+      </p>
+
+      <div class="hero-search-wrapper">
+        <form action="/posts" method="GET" class="search-form">
+          <div class="search-input-box">
+            <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" name="q" class="search-input" placeholder="Tìm kiếm bài viết, công nghệ, thủ thuật Docker, CI/CD..." autocomplete="off">
+            <span class="search-kbd">Enter</span>
+          </div>
+          <button type="submit" class="btn btn-primary btn-search">
+            <span>Tìm kiếm</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </button>
+        </form>
+      </div>
+
+      <!-- Quick Topic Tags -->
+      <div class="hero-quick-tags">
+        <span class="quick-tags-label">Chủ đề thịnh hành:</span>
+        <div class="quick-tags-list">
+          <a href="/posts?tag=docker" class="hero-tag-pill">#Docker</a>
+          <a href="/posts?tag=microservices" class="hero-tag-pill">#Microservices</a>
+          <a href="/posts?tag=ci-cd" class="hero-tag-pill">#CI/CD</a>
+          <a href="/posts?tag=postgresql" class="hero-tag-pill">#PostgreSQL</a>
+          <a href="/posts?tag=nginx" class="hero-tag-pill">#Nginx</a>
+          <a href="/posts?tag=grafana" class="hero-tag-pill">#Grafana</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Layout -->
+  <div class="layout-with-sidebar">
+    <div class="main-content">
+      <!-- Section: Latest Posts -->
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <span class="section-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          </span>
+          <h2>Bài viết mới nhất</h2>
+        </div>
+        <a href="/posts" class="view-all-link">
+          <span>Xem tất cả</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        </a>
+      </div>
+
+      <div class="posts-grid">
+        <% if (latestPosts.length === 0) { %>
+          <div class="card empty-card">
+            <p class="text-muted">Chưa có bài viết nào được xuất bản.</p>
+          </div>
+        <% } %>
+        <% latestPosts.forEach(post => { %>
+          <article class="post-card card">
+            <a href="/posts/<%= post.slug %>" class="post-cover-link">
+              <img src="<%= post.cover_image_path || '/images/covers/cover-1.svg' %>" 
+                   alt="<%= post.title %>" 
+                   class="post-cover-img" 
+                   loading="lazy" 
+                   onerror="this.onerror=null; this.src='/images/covers/cover-1.svg';">
+              <span class="category-badge-floating"><%= post.category_name %></span>
+            </a>
+            <div class="post-card-body">
+              <div class="post-meta">
+                <span class="post-date">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  <%= new Date(post.published_at).toLocaleDateString('vi-VN') %>
+                </span>
+                <span class="post-views">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <%= post.view_count %> lượt xem
+                </span>
+              </div>
+              <h3 class="post-title">
+                <a href="/posts/<%= post.slug %>"><%= post.title %></a>
+              </h3>
+              <p class="post-excerpt"><%= post.excerpt %></p>
+              <div class="post-card-footer">
+                <div class="post-author-info">
+                  <span class="author-avatar-chip"><%= (post.author_name || 'U').charAt(0).toUpperCase() %></span>
+                  <a href="/authors/<%= post.author_username %>" class="author-name"><%= post.author_name %></a>
+                </div>
+                <a href="/posts/<%= post.slug %>" class="read-more-btn" aria-label="Đọc bài viết <%= post.title %>">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </a>
+              </div>
+            </div>
+          </article>
+        <% }) %>
+      </div>
+
+      <!-- Section: Popular Posts -->
+      <div class="section-header" style="margin-top: 50px;">
+        <div class="section-title-wrap">
+          <span class="section-icon section-icon-hot">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+          </span>
+          <h2>Được xem nhiều nhất</h2>
+        </div>
+      </div>
+
+      <div class="popular-grid">
+        <% popularPosts.forEach((post, index) => { %>
+          <article class="popular-card card">
+            <div class="popular-rank">0<%= index + 1 %></div>
+            <div class="popular-info">
+              <div class="popular-meta">
+                <a href="/posts?category=<%= post.category_slug %>" class="category-pill-mini"><%= post.category_name %></a>
+                <span class="popular-views">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <%= post.view_count %> xem
+                </span>
+              </div>
+              <h4 class="popular-title"><a href="/posts/<%= post.slug %>"><%= post.title %></a></h4>
+              <span class="popular-author">Bởi <strong><%= post.author_name %></strong></span>
+            </div>
+          </article>
+        <% }) %>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-widget card">
+        <div class="widget-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          <h3>Chuyên mục</h3>
+        </div>
+        <ul class="widget-list">
+          <% categories.forEach(cat => { %>
+            <li>
+              <a href="/posts?category=<%= cat.slug %>" class="category-item">
+                <span class="cat-name"><%= cat.name %></span>
+                <span class="badge cat-badge"><%= cat.post_count %></span>
+              </a>
+            </li>
+          <% }) %>
+        </ul>
+      </div>
+
+      <div class="sidebar-widget card">
+        <div class="widget-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+          <h3>Thẻ nổi bật</h3>
+        </div>
+        <div class="tags-cloud">
+          <% tags.forEach(t => { %>
+            <a href="/posts?tag=<%= t.slug %>" class="tag-pill">
+              <span>#<%= t.name %></span>
+              <span class="tag-count"><%= t.post_count %></span>
+            </a>
+          <% }) %>
+        </div>
+      </div>
+
+      <!-- Quick Platform Info Widget -->
+      <div class="sidebar-widget card system-status-widget">
+        <div class="widget-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+          <h3>Kiến trúc Hạ tầng</h3>
+        </div>
+        <div class="status-items">
+          <div class="status-item">
+            <span class="status-indicator online"></span>
+            <span class="status-label">Nginx Hardened HTTPS</span>
+            <span class="status-val">TLS 1.3</span>
+          </div>
+          <div class="status-item">
+            <span class="status-indicator online"></span>
+            <span class="status-label">PostgreSQL 16 Multi-Role</span>
+            <span class="status-val">Active</span>
+          </div>
+          <div class="status-item">
+            <span class="status-indicator online"></span>
+            <span class="status-label">Prometheus & Grafana</span>
+            <span class="status-val">Scraping</span>
+          </div>
+          <div class="status-item">
+            <span class="status-indicator online"></span>
+            <span class="status-label">Rate Limiting & CSP</span>
+            <span class="status-val">Enforced</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<%- include('partials/footer') %>
