@@ -51,7 +51,7 @@ function startTelemetryFeed() {
   // 4. Periodic Nginx traffic generator for status codes (200, 302, 404)
   // Ensures Panel 2 (HTTP Status Donut) has varied slices
   const agent = new https.Agent({ rejectUnauthorized: false });
-  const samplePaths = ['/', '/posts', '/health', '/rss.xml', '/not-found-page', '/api/v1/missing'];
+  const samplePaths = ['/', '/posts', '/health', '/rss.xml', '/not-found-page', '/api/v1/missing', '/api/simulate-500'];
 
   setInterval(() => {
     const p = samplePaths[Math.floor(Math.random() * samplePaths.length)];
@@ -68,6 +68,25 @@ function startTelemetryFeed() {
     req.on('error', () => {}); // ignore transient network errors
     req.end();
   }, 7000);
+
+  // 5. Periodic Rate Limit (429) simulation
+  // Sends burst of requests to /login every 35 seconds to ensure 429 logs are always available
+  setInterval(() => {
+    for (let i = 0; i < 6; i++) {
+      const req = https.request({
+        hostname: 'nginx',
+        port: 8443,
+        path: '/login',
+        method: 'GET',
+        agent,
+        headers: { 'Host': 'localhost' }
+      }, (res) => {
+        res.resume();
+      });
+      req.on('error', () => {});
+      req.end();
+    }
+  }, 35000);
 }
 
 module.exports = { startTelemetryFeed };

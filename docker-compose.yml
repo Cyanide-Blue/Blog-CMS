@@ -279,6 +279,86 @@ services:
           cpus: "0.2"
           memory: 64M
 
+  loki:
+    image: grafana/loki:3.0.0
+    restart: unless-stopped
+    user: "10001:10001"
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+      - /loki/scratch:rw,noexec,nosuid,size=64m
+    command:
+      - "-config.file=/etc/loki/loki-config.yaml"
+    volumes:
+      - ./loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - loki_data:/loki
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3100/ready > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    restart: unless-stopped
+    security_opt:
+      - "no-new-privileges:true"
+    command:
+      - "-config.file=/etc/promtail/promtail.yaml"
+    volumes:
+      - ./promtail/promtail-config.yaml:/etc/promtail/promtail.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /mnt/wsl/docker-desktop-data/data/docker/containers:/var/lib/docker/containers:ro
+    depends_on:
+      - loki
+    networks:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  alert-sink:
+    build:
+      context: ./alert-sink
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    volumes:
+      - alert_sink_data:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:9099/health')\" > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+
 volumes:
   db_data:
     name: blogcms_db_data
@@ -290,6 +370,10 @@ volumes:
     name: blogcms_prometheus_data
   grafana_data:
     name: blogcms_grafana_data
+  loki_data:
+    name: blogcms_loki_data
+  alert_sink_data:
+    name: blogcms_alert_sink_data
 
 networks:
   frontend:

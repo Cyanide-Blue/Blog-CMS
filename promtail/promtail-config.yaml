@@ -1,0 +1,72 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+  log_level: info
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker-containers
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+
+    relabel_configs:
+      # Extract container name without leading slash
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+
+      # Extract compose service name
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: 'compose_service'
+
+      # Map required job labels
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        regex: 'web'
+        target_label: 'job'
+        replacement: 'webapp'
+
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        regex: 'nginx'
+        target_label: 'job'
+        replacement: 'nginx'
+
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        regex: 'db'
+        target_label: 'job'
+        replacement: 'postgres'
+
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        regex: 'alert-sink'
+        target_label: 'job'
+        replacement: 'alert-sink'
+
+      # Fallback for job label if not matched above
+      - source_labels: ['job', 'compose_service']
+        regex: ';(.*)'
+        target_label: 'job'
+        replacement: '$1'
+
+      # Dynamic log path in mounted containers directory
+      - source_labels: ['__meta_docker_container_id']
+        regex: '(.*)'
+        target_label: '__path__'
+        replacement: /var/lib/docker/containers/$1/$1-json.log
+
+    pipeline_stages:
+      # Parse Docker container json log envelope (stdout/stderr)
+      - docker: {}
+
+      # Parse Nginx access logs to extract HTTP status code (without high-cardinality IP label)
+      - match:
+          selector: '{job="nginx"}'
+          stages:
+            - regex:
+                expression: '^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<request>[^"]*)" (?P<status>\d{3}) (?P<body_bytes_sent>\d+)'
+            - labels:
+                status:

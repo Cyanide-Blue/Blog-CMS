@@ -27,7 +27,13 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../views'));
 
 // Static assets
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, '../public'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.xsl')) {
+      res.setHeader('Content-Type', 'text/xsl; charset=utf-8');
+    }
+  }
+}));
 
 // Body parsers with 2MB limits
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
